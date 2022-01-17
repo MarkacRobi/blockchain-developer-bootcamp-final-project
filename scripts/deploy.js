@@ -19,14 +19,14 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const Token = await ethers.getContractFactory("Token");
-  const token = await Token.deploy();
-  await token.deployed();
+  const RobiToken = await ethers.getContractFactory("RobiToken");
+  const robiToken = await RobiToken.deploy();
+  await robiToken.deployed();
 
-  console.log("Token address:", token.address);
+  console.log("Token address:", robiToken.address);
 
   // We also save the contract's artifacts and address in the frontend directory
-  saveFrontendFiles(token);
+  saveFrontendFiles(robiToken);
 }
 
 function saveFrontendFiles(token) {
@@ -42,11 +42,11 @@ function saveFrontendFiles(token) {
     JSON.stringify({ Token: token.address }, undefined, 2)
   );
 
-  const TokenArtifact = artifacts.readArtifactSync("Token");
+  const RobiTokenArtifact = artifacts.readArtifactSync("RobiToken");
 
   fs.writeFileSync(
-    contractsDir + "/Token.json",
-    JSON.stringify(TokenArtifact, null, 2)
+    contractsDir + "/RobiToken.json",
+    JSON.stringify(RobiTokenArtifact, null, 2)
   );
 }
 

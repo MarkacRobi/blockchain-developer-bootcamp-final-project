@@ -4,7 +4,8 @@ require("@nomiclabs/hardhat-waffle");
 // project. It imports a Hardhat task definition, that can be used for
 // testing the frontend.
 require("./tasks/faucet");
+require("./tasks/accounts");
 
 module.exports = {
-  solidity: "0.7.3"
+  solidity: "0.8.0"
 };
