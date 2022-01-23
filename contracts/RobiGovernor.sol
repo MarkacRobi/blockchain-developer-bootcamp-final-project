@@ -30,6 +30,11 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
         uint weight;
     }
 
+    struct VoteResult {
+        Vote vote;
+        uint proposalId;
+    }
+
     struct Proposal {
         uint id;
         uint voteStart; // block number
@@ -66,8 +71,8 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
 
     address immutable private governanceTokenAddress;
 
-    constructor(address _token, string memory name) {
-        _name = name;
+    constructor(address _token, string memory tokenName) {
+        _name = tokenName;
         governanceTokenAddress = _token;
     }
 
@@ -132,7 +137,7 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
         // string input length checks
         require(utfStringLength(forumLink) <= maxForumLinkSize(), "Forum link length exceeds max size");
         require(utfStringLength(title) <= maxTitleSize(), "Title length exceeds max size");
-        require(utfStringLength(description) <= maxTitleSize(), "Description length exceeds max size");
+        require(utfStringLength(description) <= maxDescriptionSize(), "Description length exceeds max size");
 
         uint proposalId = proposalsCounter;
         _proposals[proposalId] = Proposal(proposalId, block.number, block.number + votingPeriod(), payable(msg.sender),
@@ -157,8 +162,12 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
         return votes[proposalId].votes[msg.sender];
     }
 
-    function getVotes(uint proposalId) public view returns (Vote memory) {
-        return votes[proposalId].votes[msg.sender];
+    function getUserVotes() public view returns (VoteResult[] memory) {
+        VoteResult[] memory tmpVotes = new VoteResult[](proposalsCounter);
+        for (uint i = 0; i < proposalsCounter; i++) {
+            tmpVotes[i] = VoteResult(votes[i].votes[msg.sender], i);
+        }
+        return tmpVotes;
     }
 
     function getProposals() public view returns (Proposal[] memory proposals) {
@@ -174,7 +183,7 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     }
 
     function fee() public pure returns (uint256) {
-        return 10;
+        return 1;
     }
 
     function maxForumLinkSize() public pure returns (uint256) {
@@ -186,7 +195,7 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     }
 
     function maxDescriptionSize() public pure returns (uint256) {
-        return 500;
+        return 200;
     }
 
     function votingPeriod() public pure returns (uint256) {

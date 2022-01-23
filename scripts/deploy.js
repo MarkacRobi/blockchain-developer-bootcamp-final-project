@@ -19,17 +19,34 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
+  // Variables used in deployment
+  const governorContractName = "RobiGovernor";
+  const tokenContractName = "RobiToken";
+  const tokenName = "RobiToken";
+  const tokenSymbol = "RTK";
+  const initialRtkSupply = 10000;
+
   const RobiToken = await ethers.getContractFactory("RobiToken");
-  const robiToken = await RobiToken.deploy();
+  const robiToken = await RobiToken.deploy(initialRtkSupply, tokenName, tokenSymbol);
   await robiToken.deployed();
 
-  console.log("Token address:", robiToken.address);
+
+
+  const RobiGovernor = await ethers.getContractFactory(governorContractName);
+  const robiGovernor = await RobiGovernor.deploy(robiToken.address, governorContractName);
+  await robiGovernor.deployed();
+
+  console.log("RobiToken address:", robiToken.address);
+  console.log("RobiGovernor address:", robiGovernor.address);
 
   // We also save the contract's artifacts and address in the frontend directory
-  saveFrontendFiles(robiToken);
+  saveFrontendFiles(robiToken, tokenContractName);
+  console.log("Saved RobiToken contract to the frontend files.");
+  saveFrontendFiles(robiGovernor, governorContractName);
+  console.log("Saved RobiGovernance contract to the frontend files.");
 }
 
-function saveFrontendFiles(token) {
+function saveFrontendFiles(token, name) {
   const fs = require("fs");
   const contractsDir = __dirname + "/../frontend/src/contracts";
 
@@ -38,14 +55,14 @@ function saveFrontendFiles(token) {
   }
 
   fs.writeFileSync(
-    contractsDir + "/contract-address.json",
-    JSON.stringify({ Token: token.address }, undefined, 2)
+    contractsDir + `/${name.toLowerCase()}-contract-address.json`,
+    JSON.stringify({ [name]: token.address }, undefined, 2)
   );
 
-  const RobiTokenArtifact = artifacts.readArtifactSync("RobiToken");
+  const RobiTokenArtifact = artifacts.readArtifactSync(name);
 
   fs.writeFileSync(
-    contractsDir + "/RobiToken.json",
+    contractsDir + `/${name}.json`,
     JSON.stringify(RobiTokenArtifact, null, 2)
   );
 }

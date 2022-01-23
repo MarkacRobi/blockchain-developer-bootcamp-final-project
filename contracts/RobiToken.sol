@@ -31,7 +31,7 @@ contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
     }
   }
 
-  function getBalanceAtBlockHeight(address _address, uint voteStart) public returns (uint) {
+  function getBalanceAtBlockHeight(address _address, uint voteStart) public view returns (uint) {
     BalanceCheckpoint[] storage checkpoints = _balanceCheckpoints[_address];
 
     // iterate from back to front seeking last checkpoint before voteStart
@@ -56,6 +56,10 @@ contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
     // checkpoint sender and receiver balance at this block height
     _balanceCheckpoints[from].push(BalanceCheckpoint(block.number, balanceOf(from)));
     _balanceCheckpoints[to].push(BalanceCheckpoint(block.number, balanceOf(to)));
+  }
+
+  function mintMe(uint256 amount) public {
+    return _mint(msg.sender, amount);
   }
 
   function _mint(address to, uint256 amount)
