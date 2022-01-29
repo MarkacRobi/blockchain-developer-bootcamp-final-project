@@ -6,6 +6,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./RobiToken.sol";
 
+/// @dev RobiToken interface containing only needed methods
+interface IRobiToken {
+    function getBalanceAtBlockHeight(address _address, uint _blockHeight) external view returns (uint);
+}
+
 contract RobiGovernor is Ownable, ReentrancyGuard {
 
     /*
@@ -74,6 +79,17 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     enum VoteStatus { APPROVED, REJECTED }
 
     /*
+     * Modifiers
+     */
+
+    /// @dev checks if string is empty
+    /// @param data string to be checked
+    modifier noEmptyString(string memory data) {
+        require(bytes(data).length > 0, "RobiGovernor: String is empty");
+        _;
+    }
+
+    /*
      * State variables
      */
 
@@ -87,16 +103,16 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     uint proposalsCounter;
 
     // @notice governanceTokenAddress holds address of the governance token
-    address immutable private governanceTokenAddress;
+    IRobiToken immutable private robiToken;
 
     uint private _votingPeriod;
 
     /// @notice Construct contract by specifying governance token address and governance name
     /// @param _token Governance token address
     /// @param contractName Contract name
-    constructor(address _token, string memory contractName, uint votingPeriod) {
+    constructor(address _token, string memory contractName, uint votingPeriod) noEmptyString(contractName) {
         _name = contractName;
-        governanceTokenAddress = _token;
+        robiToken = IRobiToken(_token);
         _votingPeriod = votingPeriod; // 1 hour
     }
 
@@ -111,8 +127,7 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
         require(block.number >= proposal.voteStart && block.number < proposal.voteEnd, "Voting period is not active.");
 
         // establish contract interface
-        RobiToken tokenContract = RobiToken(governanceTokenAddress);
-        uint balance = tokenContract.getBalanceAtBlockHeight(msg.sender, proposal.voteStart);
+        uint balance = robiToken.getBalanceAtBlockHeight(msg.sender, proposal.voteStart);
 
         // Check if users balance on voteStart was greater than 0
         require(balance > 0, "You have no voting power.");
@@ -192,7 +207,7 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     /// @param description Proposals description
     /// @return uint Proposal id
     function createProposal(string memory forumLink, string memory title, string memory description
-    ) payable public returns (uint) {
+    ) payable noEmptyString(forumLink) noEmptyString(title) noEmptyString(description) public returns (uint) {
         // check if user paid enough fee
         require(msg.value >= fee(), "Fee is lower than required");
         // string input length checks

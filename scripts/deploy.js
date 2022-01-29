@@ -25,6 +25,7 @@ async function main() {
   const tokenName = "RobiToken";
   const tokenSymbol = "RTK";
   const initialRtkSupply = 10000;
+  const defaultVotingPeriod = 5082; // approx 1 day if block time is ~17 seconds
 
   const RobiToken = await ethers.getContractFactory("RobiToken");
   const robiToken = await RobiToken.deploy(initialRtkSupply, tokenName, tokenSymbol);
@@ -33,7 +34,7 @@ async function main() {
 
 
   const RobiGovernor = await ethers.getContractFactory(governorContractName);
-  const robiGovernor = await RobiGovernor.deploy(robiToken.address, governorContractName);
+  const robiGovernor = await RobiGovernor.deploy(robiToken.address, governorContractName, defaultVotingPeriod);
   await robiGovernor.deployed();
 
   console.log("RobiToken address:", robiToken.address);

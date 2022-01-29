@@ -1,7 +1,7 @@
 {
-  "name": "hardhat-hackathon-boilerplate",
+  "name": "governance-poc",
   "version": "1.0.0",
-  "description": "A boilerplate repository to get you started with Hardhat and Ethereum development",
+  "description": "A Governance repository",
   "directories": {
     "test": "test"
   },
@@ -10,19 +10,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nomiclabs/hardhat-hackathon-boilerplate.git"
+    "url": "git+https://github.com/MarkacRobi/blockchain-developer-bootcamp-final-project.git"
   },
   "keywords": [
     "hardhat",
     "ethereum",
-    "hackathon"
+    "governance"
   ],
-  "author": "Nomic Labs",
+  "author": "Robi Markac",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nomiclabs/hardhat-hackathon-boilerplate/issues"
+    "url": "https://github.com/MarkacRobi/blockchain-developer-bootcamp-final-project/issues"
   },
-  "homepage": "https://github.com/nomiclabs/hardhat-hackathon-boilerplate#readme",
+  "homepage": "https://github.com/MarkacRobi/blockchain-developer-bootcamp-final-project#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-ganache": "^2.0.1",

@@ -114,7 +114,7 @@ export class Dapp extends React.Component {
 
         <div className="row">
           <div className="col-12">
-            <button type="button" className="btn btn-primary mt-2" onClick={() => this.handleMint()}>Mint me 100 RTK!</button>
+            <button type="button" className="btn btn-primary mt-2 mb-2" onClick={() => this.handleMint()}>Mint me 100 RTK!</button>
           </div>
         </div>
 

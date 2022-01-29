@@ -2,14 +2,12 @@
 pragma solidity 0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 /// @title ERC20 compliant implementation of custom token.
 /// @author Robi Markac
 /// @notice This contract can be used as POC governance token
 /// @dev Functions are implemented in the spirit of POC thus it should be adjusted before deploying to main net
-contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
+contract RobiToken is ERC20 {
 
   /// @notice BalanceCheckpoint struct determines balance at certain block height
   struct BalanceCheckpoint {
@@ -24,7 +22,7 @@ contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
   /// @param initialSupply The initial token supply
   /// @param name A token name
   /// @param symbol A token symbol
-  constructor(uint256 initialSupply, string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
+  constructor(uint256 initialSupply, string memory name, string memory symbol) ERC20(name, symbol) {
     _mint(msg.sender, initialSupply);
   }
 
@@ -53,7 +51,7 @@ contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
   /// @param _address Users address for which balance is requested
   /// @param _blockHeight Block height at which users balance is requested
   /// @return uint Users balance at provided block height
-  function getBalanceAtBlockHeight(address _address, uint _blockHeight) public view returns (uint) {
+  function getBalanceAtBlockHeight(address _address, uint _blockHeight) external view returns (uint) {
     BalanceCheckpoint[] storage checkpoints = _balanceCheckpoints[_address];
 
     // iterate from back to front seeking last checkpoint before voteStart
@@ -71,7 +69,7 @@ contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
   /// @dev Override of _afterTokenTransfer is required by Solidity
   function _afterTokenTransfer(address from, address to, uint256 amount)
   internal
-  override(ERC20, ERC20Votes)
+  override(ERC20)
   {
     super._afterTokenTransfer(from, to, amount);
 
@@ -91,7 +89,7 @@ contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
   /// @dev Override of _mint is required by Solidity
   function _mint(address to, uint256 amount)
   internal
-  override(ERC20, ERC20Votes)
+  override(ERC20)
   {
     super._mint(to, amount);
   }
@@ -100,7 +98,7 @@ contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
   /// @dev Override of _burn is required by Solidity
   function _burn(address account, uint256 amount)
   internal
-  override(ERC20, ERC20Votes)
+  override(ERC20)
   {
     super._burn(account, amount);
   }
