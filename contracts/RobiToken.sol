@@ -18,7 +18,6 @@ contract RobiToken is ERC20, ERC20Permit, ERC20Votes {
   }
 
   /// @dev _balanceCheckpoints mapping maps user address to his balance checkpoints
-  /// @notice BalanceCheckpoint is created on each user balance change (transfer containing user address as from or to)
   mapping(address => BalanceCheckpoint[]) private _balanceCheckpoints;
 
   /// @notice Construct contract by providing ERC20 params (token name and symbol) and initial supply of token

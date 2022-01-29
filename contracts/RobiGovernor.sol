@@ -44,6 +44,7 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     struct VoteResult {
         Vote vote;
         uint proposalId;
+        address voter;
     }
 
     /// @notice Proposal struct represents specific proposal
@@ -88,9 +89,15 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     // @notice governanceTokenAddress holds address of the governance token
     address immutable private governanceTokenAddress;
 
-    constructor(address _token, string memory tokenName) {
-        _name = tokenName;
+    uint private _votingPeriod;
+
+    /// @notice Construct contract by specifying governance token address and governance name
+    /// @param _token Governance token address
+    /// @param contractName Contract name
+    constructor(address _token, string memory contractName, uint votingPeriod) {
+        _name = contractName;
         governanceTokenAddress = _token;
+        _votingPeriod = votingPeriod; // 1 hour
     }
 
     /// @notice This function is used to cast vote on specific proposal
@@ -112,6 +119,21 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
 
         Vote storage currentVote = votes[proposalId].votes[msg.sender];
 
+        // check if user has already voted and subtract vote weight from total for or against
+        if (currentVote.weight != 0) {
+            if (currentVote.status == VoteStatus.APPROVED) {
+                proposal.forVotes -= currentVote.weight;
+            } else {
+                proposal.againstVotes -= currentVote.weight;
+            }
+        }
+
+        if (VoteStatus.APPROVED == voteStatus) {
+            proposal.forVotes += balance;
+        } else {
+            proposal.againstVotes += balance;
+        }
+
         currentVote.status = voteStatus;
         currentVote.weight = balance;
 
@@ -124,11 +146,12 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     /// @dev This function is protected against reentrancy because of external transfer call inside loop
     function updateProposalStates() payable public nonReentrant {
         // iterate all proposals
+        // FIXME optimise proposal state update logic before production
         for (uint i = 0; i < proposalsCounter; i++) {
             Proposal storage proposal = _proposals[proposalsCounter];
             // if proposal is active and time to vote has passed
             if (proposal.status == ProposalStatus.ACTIVE && block.number >= proposal.voteEnd) {
-                processProposal(proposal);
+                processProposal(proposal.id);
             }
         }
     }
@@ -137,7 +160,7 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     /// @dev This function should be triggered only when proposal is enacted
     /// @param proposalId Proposal id
     function confirmProposalExecution(uint proposalId) public onlyOwner {
-        require(block.number < _proposals[proposalId].voteEnd, "Proposal voting period is still open!");
+        require(block.number >= _proposals[proposalId].voteEnd, "Proposal voting period is still open!");
 
         _proposals[proposalId].status = ProposalStatus.EXECUTED;
 
@@ -146,8 +169,9 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
 
     /// @notice This function is used to process proposal states and return fees if proposal has passed
     /// @dev Calling function should be protected by reentrancy guard
-    /// @param proposal Proposal which is being processed
-    function processProposal(Proposal storage proposal) private {
+    /// @param proposalId Proposal which is being processed
+    function processProposal(uint proposalId) private {
+        Proposal storage proposal = _proposals[proposalId];
         if (proposal.forVotes > proposal.againstVotes) {
             proposal.status = ProposalStatus.PASSED;
             if (!proposal.feeRefunded) {
@@ -177,7 +201,7 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
         require(utfStringLength(description) <= maxDescriptionSize(), "Description length exceeds max size");
 
         uint proposalId = proposalsCounter;
-        _proposals[proposalId] = Proposal(proposalId, block.number, block.number + votingPeriod(), payable(msg.sender),
+        _proposals[proposalId] = Proposal(proposalId, block.number, block.number + _votingPeriod, payable(msg.sender),
         title, description, ProposalStatus.ACTIVE, 0, 0, fee(), false, forumLink);
 
         proposalsCounter++;
@@ -185,6 +209,12 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
         emit LogProposalCreated(proposalId);
 
         return proposalsCounter - 1;
+    }
+
+
+    /// @notice This function is used to update the voting period
+    function updateVotingPeriod(uint256 newPeriod) public onlyOwner {
+        _votingPeriod  = newPeriod;
     }
 
     /// @notice This function returns name of this contract
@@ -201,10 +231,10 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     }
 
     /// @notice This function returns users vote for specific proposal
-    /// @param id Proposal id
+    /// @param proposalId Proposal id
     /// @return Vote Users vote for specific proposal
-    function getVote(uint proposalId) public view returns (Vote memory) {
-        return votes[proposalId].votes[msg.sender];
+    function getVote(uint proposalId, address _address) public view returns (Vote memory) {
+        return votes[proposalId].votes[_address];
     }
 
     /// @notice This function returns all user votes for all proposals
@@ -212,13 +242,13 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     function getUserVotes() public view returns (VoteResult[] memory) {
         VoteResult[] memory tmpVotes = new VoteResult[](proposalsCounter);
         for (uint i = 0; i < proposalsCounter; i++) {
-            tmpVotes[i] = VoteResult(votes[i].votes[msg.sender], i);
+            tmpVotes[i] = VoteResult(votes[i].votes[msg.sender], i, msg.sender);
         }
         return tmpVotes;
     }
 
     /// @notice This function returns all proposals
-    /// @return Proposal[] Array of proposals
+    /// @return proposals Array of proposals
     function getProposals() public view returns (Proposal[] memory proposals) {
         Proposal[] memory tmpProposals = new Proposal[](proposalsCounter);
         for (uint i = 0; i < proposalsCounter; i++) {
@@ -260,13 +290,13 @@ contract RobiGovernor is Ownable, ReentrancyGuard {
     /// @notice This function returns voting period
     /// @dev Voting period is specified in number of blocks
     /// @return uint256 Number representing voting period
-    function votingPeriod() public pure returns (uint256) {
-        return 46027; // 1 week
+    function getVotingPeriod() public view returns (uint) {
+        return _votingPeriod;
     }
 
     /// @notice This function returns length of string
     /// @dev This function should be used for determining the actual string length
-    /// @return uint Number representing provided string length
+    /// @return length Number representing provided string length
     function utfStringLength(string memory str) pure internal returns (uint length) {
         uint i=0;
         bytes memory string_rep = bytes(str);
