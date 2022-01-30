@@ -1,5 +1,5 @@
-// This is a script for deploying your contracts. You can adapt it to deploy
-// yours, or create new ones.
+const ALCHEMY_API_KEY = "KEY";
+
 async function main() {
   // This is just a convenience check
   if (network.name === "hardhat") {

@@ -1,7 +1,7 @@
 import React from "react";
+const humanizeDuration = require("humanize-duration");
 
-
-export function ProposalsList({ proposals, userVotes, castVote }) {
+export function ProposalsList({ proposals, userVotes, castVote, blockHeight, refreshProposalStates }) {
 
     const proposalStatusToString = (status) => {
         switch (status) {
@@ -31,13 +31,22 @@ export function ProposalsList({ proposals, userVotes, castVote }) {
     }
 
     const isVoteValid = (vote) => {
+        if (!vote) return false;
         return !(vote.status.toString() === "0" && vote.weight.toString() === "0");
+    }
+
+    const timeLeft = (voteEnd) => {
+        const averageBlockTime = 17000; // milliseconds
+        const diff = +voteEnd - blockHeight;
+        return diff <= 0 ? undefined : humanizeDuration(diff * averageBlockTime);
     }
 
     if (proposals?.length > 0 && userVotes?.length > 0) {
         return (
             <div className="row">
                 <div className="col-12">
+                    <p className="card-text">Proposals</p>
+                    <button className="btn btn-primary mb-2" onClick={refreshProposalStates}>Refresh proposal states</button>
                     <div className="card-group">
                     {proposals.map((value, index) => {
                         return (
@@ -50,6 +59,8 @@ export function ProposalsList({ proposals, userVotes, castVote }) {
                                     <div className="card-text">For votes: {value.forVotes.toString()}</div>
                                     <div className="card-text">Against votes: {value.againstVotes.toString()}</div>
                                     <div className="card-text">Status: {proposalStatusToString(value.status.toString())}</div>
+                                    { proposalStatusToString(value.status.toString()) === "ACTIVE" && timeLeft(value.voteEnd)
+                                        && <div className="card-text">Time left: {timeLeft(value.voteEnd)}</div> }
 
                                         { isVoteValid(userVotes[index]?.vote) && (
                                             <>
@@ -66,16 +77,16 @@ export function ProposalsList({ proposals, userVotes, castVote }) {
                                                 proposalStatusToString(value.status.toString()) === "ACTIVE" && (
                                                     <>
                                                         <p className="mt-2">
-                                                            { isVoteValid(userVotes[index].vote) ? "Change vote:" : ""}
+                                                            { isVoteValid(userVotes[index]?.vote) ? "Change vote:" : ""}
                                                         </p>
                                                         <div>
-                                                            {!isVoteValid(userVotes[index].vote) && (
+                                                            {!isVoteValid(userVotes[index]?.vote) && (
                                                                 <>
                                                                     <button type="button" className="btn btn-success mr-2" onClick={() =>  castVote(0, index)}>APPROVE</button>
                                                                     <button type="button" className="btn btn-danger mr-2" onClick={() => castVote(1, index)}>REJECT</button>
                                                                 </>
                                                             )}
-                                                            {isVoteValid(userVotes[index].vote) && (
+                                                            {isVoteValid(userVotes[index]?.vote) && (
                                                                 <>
                                                                     {userVotes[index].vote.status.toString() !== "0" ? (
                                                                         <button type="button" className="btn btn-success mr-2" onClick={() =>  castVote(0, index)}>APPROVE</button>

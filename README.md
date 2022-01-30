@@ -62,6 +62,53 @@ Open [http://localhost:3000/](http://localhost:3000/) to see your Dapp. You will
 need to have [Metamask](https://metamask.io) installed and listening to
 `localhost 8545`.
 
+## Contract Features
+> There are two contracts for this project, which are dependent on each other for this project.
+
+### RobiToken Features
+
+- It contains all features of ERC20 interface from OpenZeppelin
+- It contains balance checkpoint feature which snapshots users balance  in `afterTokenTransfer` function
+- It contains mint feature in order to receive tokens for testing purposes
+- It contains burn feature to destroy tokens
+
+### RobiGovernance
+
+- It contains only owner feature
+- It contains reentrancy guarding feature
+- You can create proposal
+- You can cast vote on proposal
+- You can trigger proposal states update
+- Owner can confirm execution of proposal
+- Owner can update voting period
+
+## Frontend Features
+
+> Frontend does not yet contain all the features supported by the smart contracts
+
+- You can connect your wallet, check your address and token balance
+- You can transfer tokens
+- You can create proposal
+- You can cast vote on the proposal
+
+## Testing
+
+Unit tests can be run using `npx hardhat test` command from the root of the project.
+
+## Deployed Contract Links
+
+RobiToken: https://rinkeby.etherscan.io/address/0xFf7A9321d8cC750FBb96b569a0E317C32d2A3b4e
+RobiGovernor: https://rinkeby.etherscan.io/address/0x4F27b1AaBEAD21B2D17A71Ab5c16b05479192228
+
+
+## Screen Recording Link
+
+https://www.youtube.com/watch?v=CHQoG00MyeU
+
+## Certification Address
+My address for certification:
+> 0x33417983F0815d2B40663Ce9bA4F52Fcd2E46789
+
 ## What’s Included?
 
 Environment have everything you need to build a Dapp powered by Hardhat and React.

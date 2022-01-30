@@ -23,7 +23,7 @@ import {ProposalsList} from "./ProposalsList";
 // This is the Hardhat Network id, you might change it in the hardhat.config.js
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
 // to use when deploying to other networks.
-const HARDHAT_NETWORK_ID = '31337';
+const NETWORK_ID  = process.env.CHAIN_ID ?? '31337'; // Default to localhost hardhat network default
 
 // This is an error code that indicates that the user canceled a transaction
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
@@ -58,6 +58,7 @@ export class Dapp extends React.Component {
       transactionError: undefined,
       networkError: undefined,
       mintError: undefined,
+      creatingProposal: false,
     };
 
     this.state = this.initialState;
@@ -175,7 +176,7 @@ export class Dapp extends React.Component {
 
         <div className="row">
           <div className="col-12">
-            {this.state.balance.gt(0) && (
+            {this.state.balance.gt(0) && !this.state.creatingProposal && (
                 <CreateProposal
                     createProposal={(title, forumLink, description) =>
                         this.createProposal(title, forumLink, description)
@@ -183,11 +184,19 @@ export class Dapp extends React.Component {
                 />
             )}
           </div>
+
+          {this.state.creatingProposal && (
+              <div className="col-12 d-flex justify-content-center align-items-center">
+                <div className="spinner-border"></div>
+              </div>
+          )}
         </div>
 
         <hr />
 
-        <ProposalsList proposals={this.state.proposals} userVotes={this.state.userVotes} castVote={(d, i) => this.castVote(d, i)}/>
+        <ProposalsList proposals={this.state.proposals} userVotes={this.state.userVotes}
+                       refreshProposalStates={() => this.refreshProposalStates()}
+                       blockHeight={this.state.blockHeight} castVote={(d, i) => this.castVote(d, i)}/>
 
       </div>
     );
@@ -274,9 +283,13 @@ export class Dapp extends React.Component {
     );
   }
   _startPollingData() {
-    this._pollDataInterval = setInterval(() => this._updateBalance(), 1000);
+    this._pollDataInterval = setInterval(() => this.updateCoreData(), 10000);
 
     // We run it once immediately so we don't have to wait for it
+    this.updateCoreData();
+  }
+
+  updateCoreData() {
     this._updateBalance();
     this.getProposals();
     this.getUserVotes();
@@ -285,6 +298,8 @@ export class Dapp extends React.Component {
 
   _stopPollingData() {
     clearInterval(this._pollDataInterval);
+    clearInterval(this._refreshProposalInterval);
+    this._refreshProposalInterval = undefined;
     this._pollDataInterval = undefined;
   }
 
@@ -349,6 +364,7 @@ export class Dapp extends React.Component {
   }
 
   async createProposal(title, forumLink, description) {
+    this.setState({ creatingProposal: true });
     console.log(`title = ${title}, forumLink = ${forumLink}, description = ${description}`);
     try {
       // create proposal and send fee amount of ETH along
@@ -357,6 +373,8 @@ export class Dapp extends React.Component {
       // We use .wait() to wait for the transaction to be mined. This method
       // returns the transaction's receipt.
       const receipt = await tx.wait();
+
+      this.setState({ txBeingSent: tx.hash });
 
       // The receipt, contains a status flag, which is 0 to indicate an error.
       if (receipt.status === 0) {
@@ -371,27 +389,39 @@ export class Dapp extends React.Component {
         this.getProposals(),
         this.getUserVotes()
       ]);
+
+      this.setState({ txBeingSent: undefined });
+
     } catch (error) {
       console.error(error);
     }
+
+    this.setState({ creatingProposal: false })
   }
 
   async getProposals() {
     try {
       const proposals = await this._governance.getProposals();
       this.setState({ proposals });
-      console.log(proposals);
     } catch (error) {
       console.log(error);
     }
   }
 
+  async refreshProposalStates() {
+    try {
+      console.log("refreshProposalStates...");
+      // trigger update of proposal states
+      await this._governance.updateProposalStates();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async getUserVotes() {
     try {
-      console.log("getUserVotes");
       const userVotes = await this._governance.getUserVotes();
       this.setState({ userVotes });
-      console.log(userVotes);
     } catch (error) {
       console.log(error);
     }
@@ -479,12 +509,12 @@ export class Dapp extends React.Component {
 
   // This method checks if Metamask selected network is Localhost:8545 
   _checkNetwork() {
-    if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) {
+    if (window.ethereum.networkVersion === NETWORK_ID ) {
       return true;
     }
 
     this.setState({ 
-      networkError: 'Please connect Metamask to Localhost:8545'
+      networkError: `Please connect Metamask to ${NETWORK_ID === "4" ? "Rinkeby testnet" : "localhost:8545"}`
     });
 
     return false;
