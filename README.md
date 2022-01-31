@@ -8,6 +8,7 @@ developed from zero.
 
 ## File structure
 
+```
 .
 ├── contracts // Solidity smart contracts
 ├── frontend // React frontend app
@@ -18,6 +19,7 @@ developed from zero.
 ├── package.json // npm dependencies and config
 ├── package-lock.json // locked npm dependencies and config
 └── README.md // description of project
+```
 
 ## Quick start
 
